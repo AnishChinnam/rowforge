@@ -350,3 +350,45 @@ def test_concurrent_same_key_returns_same_job(app, account):
         ids = list(executor.map(submit, [1, 2]))
     assert ids[0] == ids[1]
     assert len(list((app.state.settings.data_dir / "inputs").iterdir())) == 1
+
+
+def test_mapping_validates_destination_and_preserves_accounting(app, account):
+    source = "Customer Number,Email Address,notes\n1,ada@example.com,hello\n1,ada@example.com,hello\n2,bad,no\n"
+    rules = {"mapping": {"Customer Number": "customer_id", "Email Address": "email"},
+             "required": ["customer_id"], "email": ["email"]}
+    job_id = upload(account, source, rules).json()["id"]
+    finish(app)
+    detail = account.get(f"/api/jobs/{job_id}").json()
+    assert detail["status"] == "completed"
+    assert (detail["processed"], detail["accepted"], detail["rejected"], detail["duplicates"]) == (3, 1, 1, 1)
+    cleaned = account.get(f"/api/jobs/{job_id}/download/cleaned").text
+    assert list(csv.reader(io.StringIO(cleaned))) == [
+        ["customer_id", "email", "notes"], ["1", "ada@example.com", "hello"]]
+    assert "email: invalid email format" in account.get(f"/api/jobs/{job_id}/download/errors").text
+    assert detail["rules"]["mapping"] == rules["mapping"]
+
+
+@pytest.mark.parametrize("mapping,message", [
+    ({"missing": "id"}, "Missing mapping columns"),
+    ({"name": "email"}, "duplicate destination columns"),
+])
+def test_mapping_invalid_file_fails_without_publishing(app, account, mapping, message):
+    job_id = upload(account, rules={"mapping": mapping}).json()["id"]
+    finish(app)
+    detail = account.get(f"/api/jobs/{job_id}").json()
+    assert detail["status"] == "failed"
+    assert message in detail["error"]
+    assert account.get(f"/api/jobs/{job_id}/download/cleaned").status_code == 409
+
+
+@pytest.mark.parametrize("mapping", [
+    {"name": ""}, {" name": "id", "name ": "other"},
+    {"name": "id", "email": "id"}, {"name": "x" * 201},
+])
+def test_invalid_mapping_configuration_rejected(account, mapping):
+    assert upload(account, rules={"mapping": mapping}).status_code == 422
+
+
+def test_mapping_changes_idempotency_fingerprint(account):
+    assert upload(account, rules={"mapping": {"name": "full_name"}}).status_code == 201
+    assert upload(account, rules={"mapping": {"name": "customer_name"}}).status_code == 409

@@ -1222,3 +1222,5 @@ progress {
 #detail-dialog:has(.preview-section) {
   width: min(850px, calc(100% - 28px));
 }
+
+#column-mapping { width: 100%; box-sizing: border-box; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; resize: vertical; margin-top: 8px; }

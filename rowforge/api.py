@@ -38,6 +38,7 @@ class Rules(BaseModel):
     required: list[str] = Field(default_factory=list, max_length=100)
     email: list[str] = Field(default_factory=list, max_length=100)
     numeric: list[str] = Field(default_factory=list, max_length=100)
+    mapping: dict[str, str] = Field(default_factory=dict, max_length=100)
     trim: bool = True
     dedupe: bool = True
 
@@ -294,6 +295,15 @@ def create_app(settings=None):
             parsed[field] = list(dict.fromkeys(v.strip() for v in parsed[field]))
             if any(not v or len(v) > 200 for v in parsed[field]):
                 raise HTTPException(422, "Rule column names must contain 1–200 characters.")
+        mapping = parsed["mapping"]
+        pairs = [(source.strip(), target.strip()) for source, target in mapping.items()]
+        if any(not value or len(value) > 200 for pair in pairs for value in pair):
+            raise HTTPException(422, "Mapping column names must contain 1–200 characters.")
+        if len({source for source, _ in pairs}) != len(pairs):
+            raise HTTPException(422, "Mapping source columns must be unique after trimming.")
+        if len({target for _, target in pairs}) != len(pairs):
+            raise HTTPException(422, "Mapping destination columns must be unique.")
+        parsed["mapping"] = dict(pairs)
         filename = (file.filename or "upload.csv").replace("\\", "/").split("/")[-1][:255]
         if not filename.lower().endswith(".csv"):
             raise HTTPException(422, "Choose a .csv file.")

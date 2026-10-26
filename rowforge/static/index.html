@@ -257,6 +257,10 @@
           ><small>UTF-8 · Up to 10 MiB · 200,000 rows</small
           ><input id="csv-file" type="file" accept=".csv,text/csv" required
         /></label>
+        <label>Column mapping (optional)
+          <textarea id="column-mapping" rows="4" placeholder="Email Address => email&#10;Customer Number => customer_id"></textarea>
+          <small>One source =&gt; destination per line. Unmapped columns stay unchanged. Use destination names in the rules below.</small>
+        </label>
         <div class="rules-heading">
           <h3>Validation rules</h3>
           <span>Column names are case-sensitive</span>

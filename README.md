@@ -62,6 +62,25 @@ Compose binds only to loopback. Its default database password is explicitly for 
 
 Redis holds a short-lived wake-up hint. Workers poll PostgreSQL for durable work; Redis is **not** the authoritative queue. Lost hints, Redis outages, or an API crash after DB commit do not lose jobs. This avoids a database/queue dual-write correctness problem. It trades at most roughly one second of idle discovery latency for simpler recovery. There is no claim of exactly-once execution: attempts can repeat, while final result publication is fenced.
 
+## Customer onboarding: column mapping
+
+In **New pipeline**, enter one `source => destination` mapping per line, for example:
+
+```text
+Customer Number => customer_id
+Email Address => email
+```
+
+Use destination names in required/email/numeric rules. Unmapped columns remain in the output, in their original order. Mappings rename columns only; they do not infer meanings, drop fields, or change values. Missing source columns and destination collisions fail safely without publishing a result. Mapping rules are saved with each job and participate in idempotency checks.
+
+API rules example:
+
+```json
+{"mapping": {"Customer Number": "customer_id", "Email Address": "email"}, "required": ["customer_id"], "email": ["email"]}
+```
+
+Try `examples/customer-onboarding.csv` with these mappings. It contains six synthetic records: three accepted, two rejected, and one duplicate when these rules and the default trim/dedupe options are used. See [the pilot plan](docs/PILOT_PLAN.md) for the commercial validation work that remains.
+
 ## Validation behavior
 
 - Comma-delimited UTF-8, with optional BOM. Up to 10 MiB, 200,000 data rows, and 100 columns.

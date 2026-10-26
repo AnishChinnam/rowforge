@@ -1,0 +1,7 @@
+Customer Number,Email Address,Customer Name
+C001,ada@example.com,Ada
+C002,grace@example.com,Grace
+C002,grace@example.com,Grace
+C003,invalid-email,Linus
+,missing@example.com,Missing ID
+C004,ken@example.com,Ken

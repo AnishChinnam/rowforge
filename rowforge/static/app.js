@@ -191,6 +191,7 @@ $("csv-file").onchange = () => {
   state.uploadKey = crypto.randomUUID();
 };
 for (const id of [
+  "column-mapping",
   "required-cols",
   "email-cols",
   "numeric-cols",
@@ -206,6 +207,18 @@ const columns = (id) =>
     .value.split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+function mappingRules() {
+  const mapping = {};
+  for (const line of $("column-mapping").value.split("\n").filter((v) => v.trim())) {
+    const parts = line.split("=>").map((v) => v.trim());
+    if (parts.length !== 2 || parts.some((v) => !v))
+      throw new Error("Use one source => destination mapping per line.");
+    if (Object.hasOwn(mapping, parts[0]))
+      throw new Error("Each source column can only be mapped once.");
+    Object.defineProperty(mapping, parts[0], {value: parts[1], enumerable: true});
+  }
+  return mapping;
+}
 async function submitFile(file, rules, key) {
   const body = new FormData();
   body.append("file", file);
@@ -230,6 +243,7 @@ $("upload-form").onsubmit = async (event) => {
     const job = await submitFile(
       file,
       {
+        mapping: mappingRules(),
         required: columns("required-cols"),
         email: columns("email-cols"),
         numeric: columns("numeric-cols"),
@@ -296,6 +310,7 @@ async function loadDetail() {
   if (stamp === state.detailStamp) return;
   state.detailStamp = stamp;
   $("detail-name").textContent = j.filename;
+  const mappingText = Object.entries(j.rules.mapping || {}).map(([a, b]) => `${a} → ${b}`).join(" · ");
   const ruleText =
     [
       ["Required", j.rules.required],
@@ -318,7 +333,7 @@ async function loadDetail() {
       )
       .join(
         "",
-      )}</div>${j.error ? `<p class="error banner">${escapeHTML(j.error)}</p>` : ""}<div class="detail-rules">${escapeHTML(ruleText)}<br>${j.rules.trim ? "Trim whitespace" : "Keep whitespace"} · ${j.rules.dedupe ? "Remove identical valid rows" : "Keep duplicate rows"}</div><div class="detail-actions">${j.status === "completed" ? `<a class="primary" href="/api/jobs/${j.id}/download/cleaned">Cleaned CSV ↓</a><a class="secondary" href="/api/jobs/${j.id}/download/errors">Error report ↓</a>` : ""}${["queued", "running"].includes(j.status) ? '<button class="secondary" id="cancel-job">Cancel pipeline</button>' : ""}${["failed", "cancelled"].includes(j.status) ? '<button class="primary" id="retry-job">Retry pipeline ↗</button>' : ""}</div>${j.status === "completed" ? '<section class="preview-section"><div class="preview-heading"><h3>Result preview</h3><div><button id="preview-cleaned" class="preview-tab" type="button">Cleaned rows</button><button id="preview-errors" class="preview-tab" type="button">Rejected rows</button></div></div><div id="result-preview" class="table-scroll"></div><p id="preview-caption" class="detail-caption"></p></section>' : ""}<h3>Activity trail</h3><ul class="timeline">${j.events.map((e) => `<li><div><p>${escapeHTML(e.message)}</p><small>${date(e.created_at)}</small></div></li>`).join("")}</ul><p class="detail-id">Job ${j.id}</p>`;
+      )}</div>${j.error ? `<p class="error banner">${escapeHTML(j.error)}</p>` : ""}<div class="detail-rules">${mappingText ? `Mapping: ${escapeHTML(mappingText)}<br>` : ""}${escapeHTML(ruleText)}<br>${j.rules.trim ? "Trim whitespace" : "Keep whitespace"} · ${j.rules.dedupe ? "Remove identical valid rows" : "Keep duplicate rows"}</div><div class="detail-actions">${j.status === "completed" ? `<a class="primary" href="/api/jobs/${j.id}/download/cleaned">Cleaned CSV ↓</a><a class="secondary" href="/api/jobs/${j.id}/download/errors">Error report ↓</a>` : ""}${["queued", "running"].includes(j.status) ? '<button class="secondary" id="cancel-job">Cancel pipeline</button>' : ""}${["failed", "cancelled"].includes(j.status) ? '<button class="primary" id="retry-job">Retry pipeline ↗</button>' : ""}</div>${j.status === "completed" ? '<section class="preview-section"><div class="preview-heading"><h3>Result preview</h3><div><button id="preview-cleaned" class="preview-tab" type="button">Cleaned rows</button><button id="preview-errors" class="preview-tab" type="button">Rejected rows</button></div></div><div id="result-preview" class="table-scroll"></div><p id="preview-caption" class="detail-caption"></p></section>' : ""}<h3>Activity trail</h3><ul class="timeline">${j.events.map((e) => `<li><div><p>${escapeHTML(e.message)}</p><small>${date(e.created_at)}</small></div></li>`).join("")}</ul><p class="detail-id">Job ${j.id}</p>`;
   if (j.status === "completed") {
     for (const kind of ["cleaned", "errors"])
       $("preview-" + kind).onclick = () => loadPreview(j.id, kind);

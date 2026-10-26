@@ -43,6 +43,13 @@ def process(source, directory, rules, max_rows, batch_size, checkpoint):
                 raise InvalidCSV("Column names must be nonempty and unique after trimming.")
             if len(header) > 100:
                 raise InvalidCSV("The CSV exceeds the 100-column limit.")
+            mapping = rules.get("mapping", {})
+            missing = set(mapping) - set(header)
+            if missing:
+                raise InvalidCSV("Missing mapping columns: " + ", ".join(sorted(missing)))
+            header = [mapping.get(column, column) for column in header]
+            if len(header) != len(set(header)):
+                raise InvalidCSV("Mapping creates duplicate destination columns. Rename both columns explicitly.")
             requested = set(rules["required"] + rules["email"] + rules["numeric"])
             if requested - set(header):
                 raise InvalidCSV("Missing rule columns: " + ", ".join(sorted(requested - set(header))))
