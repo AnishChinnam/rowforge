@@ -1,15 +1,25 @@
 # RowForge
 
+[![Tests](https://github.com/AnishChinnam/rowforge/actions/workflows/tests.yml/badge.svg)](https://github.com/AnishChinnam/rowforge/actions/workflows/tests.yml)
+
 **A private CSV processing workspace with durable jobs, recoverable workers, and downloadable validation reports.**
 
 Upload a UTF-8 CSV, choose required/email/numeric columns, and get a cleaned dataset plus a row-level error report. Processing happens in a separate worker process. Restarting the API doesn't erase work; an interrupted worker's lease expires and another worker restarts the file safely.
+
+## Get the project
+
+```sh
+git clone https://github.com/AnishChinnam/rowforge.git
+cd rowforge
+```
+
+If you already have the project on this Mac, use `cd ~/Desktop/rowforge` instead.
 
 ## Run on your Mac
 
 Python 3.11+ is required. This mode uses SQLite and starts the API and a separate worker together; no Docker or Redis is required.
 
 ```sh
-cd ~/Desktop/rowforge
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.lock
@@ -97,6 +107,6 @@ Mutations after authentication require the `X-CSRF-Token` returned at login or `
 
 Portfolio software, developed with AI assistance. No email verification, password reset, SSO, per-user storage quotas, automatic file retention, schema migration framework, cloud object storage, or multi-region coordination. Auth throttling is modest DB-backed per-IP/email accounting, not a replacement for edge-level abuse prevention. The 20-active-job limit is serialized per account across uploads and retries. Inactive/orphaned attempt files after a hard kill may require operator cleanup. Do not present it as a production service handling customer data.
 
-An automated GitHub Actions workflow is included. No remote CI result or public deployment is implied until actually run.
+GitHub Actions runs Python 3.11/3.12/3.13 checks, real PostgreSQL/Redis integration tests, and a complete Docker Compose smoke test with two workers. [Verified passing run](https://github.com/AnishChinnam/rowforge/actions/runs/40411211056). This is a source repository, not a publicly hosted application.
 
 See [docs/VALIDATION.md](docs/VALIDATION.md) for the actual local checks and service-testing limitations.
