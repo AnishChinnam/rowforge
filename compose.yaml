@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: rowforge
+      POSTGRES_USER: rowforge
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development-only}
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U rowforge"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  init:
+    build: .
+    command: [python, -m, rowforge, init-db]
+    environment: &environment
+      DATABASE_URL: postgresql+psycopg://rowforge:${POSTGRES_PASSWORD:-local-development-only}@db:5432/rowforge
+      REDIS_URL: redis://redis:6379/0
+      DATA_DIR: /app/data
+    volumes:
+      - files:/app/data
+    depends_on:
+      db: {condition: service_healthy}
+  api:
+    build: .
+    ports: ["127.0.0.1:8082:8082"]
+    environment: *environment
+    volumes:
+      - files:/app/data
+    depends_on:
+      init: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+  worker:
+    build: .
+    command: [python, -m, rowforge, worker]
+    environment: *environment
+    volumes:
+      - files:/app/data
+    depends_on:
+      init: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+volumes:
+  postgres:
+  files:

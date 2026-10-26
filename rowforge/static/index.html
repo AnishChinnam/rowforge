@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>RowForge · Data that’s ready for what’s next</title>
+    <link rel="icon" href="/static/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/static/style.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <div id="auth-view" class="auth-layout">
+      <section class="auth-story">
+        <a class="brand" href="/"
+          ><span class="brand-mark">R<span>↗</span></span> RowForge</a
+        >
+        <div class="story-main">
+          <span class="eyebrow">THE LAST MILE OF YOUR DATA</span>
+          <h1>Messy in.<br /><span>Ready out.</span></h1>
+          <p>
+            Turn a raw CSV into a clean dataset.<br />Every row accounted for.
+            Every job recoverable.
+          </p>
+          <div class="pipeline">
+            <span>UPLOAD</span><i>→</i><span>VALIDATE</span><i>→</i
+            ><span>DELIVER</span>
+          </div>
+          <div class="sample-card">
+            <div class="sample-top">
+              <span class="live-dot"></span> A clearer picture
+            </div>
+            <div class="sample-row">
+              <span>Accepted rows</span><strong>Ready to use</strong>
+            </div>
+            <div class="sample-row">
+              <span>Invalid rows</span><strong>Explained, not lost</strong>
+            </div>
+            <div class="sample-row">
+              <span>Interrupted job</span><strong>Picked up again</strong>
+            </div>
+          </div>
+        </div>
+        <p class="story-footer">
+          Built for careful work, even when things go wrong.
+        </p>
+      </section>
+      <main class="auth-panel">
+        <div class="auth-box">
+          <span class="eyebrow muted">YOUR DATA WORKSPACE</span>
+          <h2 id="auth-title">Welcome to RowForge</h2>
+          <p id="auth-description">
+            Create an account to start your first pipeline.
+          </p>
+          <div class="tabs">
+            <button class="active" id="register-tab" type="button">
+              Create account</button
+            ><button id="login-tab" type="button">Sign in</button>
+          </div>
+          <form id="auth-form">
+            <label
+              >Email address<input
+                type="email"
+                id="email"
+                required
+                autocomplete="email"
+                placeholder="you@example.com"
+                maxlength="254" /></label
+            ><label
+              >Password<input
+                type="password"
+                id="password"
+                required
+                minlength="10"
+                maxlength="128"
+                autocomplete="new-password"
+                placeholder="At least 10 characters"
+            /></label>
+            <p id="auth-error" class="error" role="alert"></p>
+            <button class="primary full" id="auth-submit">
+              Create workspace <span>↗</span>
+            </button>
+          </form>
+          <div class="auth-note">
+            <span>◎</span>
+            <p>
+              Your uploads and results belong to your account. Other users can’t
+              access them.
+            </p>
+          </div>
+          <p class="small muted">
+            Portfolio edition · Local or self-hosted<br />No email verification
+            or password recovery in this version.
+          </p>
+        </div>
+      </main>
+    </div>
+    <div id="workspace" class="workspace" hidden>
+      <aside class="sidebar">
+        <a class="brand" href="/"
+          ><span class="brand-mark">R<span>↗</span></span> RowForge</a
+        ><span class="nav-caption">WORKSPACE</span
+        ><button id="overview-nav" class="nav-item active">
+          <span>▦</span> All jobs
+          <span id="nav-count" class="nav-count">0</span></button
+        ><button id="new-nav" class="nav-item">
+          <span>＋</span> New pipeline
+        </button>
+        <div class="sidebar-bottom">
+          <a href="/docs" target="_blank" rel="noopener">API reference ↗</a
+          ><span class="small">PRIVATE WORKSPACE</span
+          ><strong id="account-email"></strong
+          ><button id="logout">Sign out ↗</button>
+        </div>
+      </aside>
+      <div class="workspace-main">
+        <header class="topbar">
+          <span
+            >Workspace <span class="slash">/</span>
+            <strong>Data pipelines</strong></span
+          ><span class="workspace-tag"
+            ><span class="live-dot"></span> Account isolated</span
+          >
+        </header>
+        <main class="dashboard">
+          <div class="page-heading">
+            <div>
+              <span class="eyebrow muted">PIPELINE OVERVIEW</span>
+              <h1>Good data starts here<span class="orange">.</span></h1>
+              <p>Upload, validate, and move forward with confidence.</p>
+            </div>
+            <button class="primary" id="new-job">＋ New pipeline</button>
+          </div>
+          <div id="page-error" class="error banner" role="alert" hidden></div>
+          <section class="stats" aria-label="Your job summary">
+            <article>
+              <span>RECENT JOBS</span>
+              <div id="stat-jobs">0</div>
+              <p>Up to 100 most recent</p>
+            </article>
+            <article>
+              <span>IN PROGRESS</span>
+              <div id="stat-active">0</div>
+              <p>Queued or processing</p>
+            </article>
+            <article>
+              <span>ROWS ACCEPTED</span>
+              <div id="stat-accepted">0</div>
+              <p>Across completed jobs shown</p>
+            </article>
+            <article>
+              <span>NEEDS ATTENTION</span>
+              <div id="stat-failed">0</div>
+              <p>Failed jobs ready to review</p>
+            </article>
+          </section>
+          <section class="jobs-section">
+            <div class="section-head">
+              <div>
+                <h2>Your pipelines <span id="jobs-count">0</span></h2>
+                <p>A full trail, from upload to output.</p>
+              </div>
+              <div class="table-tools">
+                <label class="search"
+                  ><span>⌕</span
+                  ><input
+                    id="search"
+                    placeholder="Find a file…"
+                    aria-label="Search jobs" /></label
+                ><select id="status-filter" aria-label="Filter jobs by status">
+                  <option value="all">All statuses</option>
+                  <option value="queued">Queued</option>
+                  <option value="running">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="failed">Failed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead>
+                  <tr>
+                    <th>FILE / PIPELINE</th>
+                    <th>STATUS</th>
+                    <th>ROWS</th>
+                    <th>CREATED</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="jobs-body"></tbody>
+              </table>
+            </div>
+            <div id="empty" class="empty">
+              <span class="empty-icon">▤</span>
+              <h3>Your next clean dataset starts here</h3>
+              <p>
+                Upload a CSV or explore with our sample customer data.<br />Set
+                the rules. We’ll take care of the rows.
+              </p>
+              <div>
+                <button id="empty-upload" class="primary">
+                  Create your first pipeline ↗</button
+                ><button id="sample-job" class="secondary">
+                  Try sample data
+                </button>
+              </div>
+              <span class="small muted"
+                >CSV · UTF-8 · Up to 10 MiB / 200,000 rows / 100 columns</span
+              >
+            </div>
+            <div id="no-matches" class="empty compact" hidden>
+              No pipelines match your search.
+            </div>
+            <footer class="table-footer">
+              <span id="table-count">0 pipelines</span
+              ><span
+                ><span class="live-dot"></span> Refreshes every 2 seconds</span
+              >
+            </footer>
+          </section>
+          <section class="bottom-note">
+            <span class="shield">↻</span>
+            <div>
+              <h3>Built to pick up where things left off.</h3>
+              <p>
+                If a worker stops, an expired job lease lets another worker
+                restart it safely. Only one current attempt can publish the
+                final result.
+              </p>
+            </div>
+            <span class="note-tag">DURABLE BY DESIGN</span>
+          </section>
+        </main>
+      </div>
+    </div>
+    <dialog id="upload-dialog">
+      <form id="upload-form">
+        <div class="dialog-head">
+          <div>
+            <span class="eyebrow muted">A FRESH START</span>
+            <h2>New pipeline</h2>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            id="close-upload"
+            aria-label="Close upload"
+          >
+            ×
+          </button>
+        </div>
+        <p class="muted">
+          Choose your file, then tell us what good data looks like.
+        </p>
+        <label id="drop-zone" class="drop-zone"
+          ><span>↑</span><strong id="file-label">Choose a CSV file</strong
+          ><small>UTF-8 · Up to 10 MiB · 200,000 rows</small
+          ><input id="csv-file" type="file" accept=".csv,text/csv" required
+        /></label>
+        <div class="rules-heading">
+          <h3>Validation rules</h3>
+          <span>Column names are case-sensitive</span>
+        </div>
+        <label
+          >Required columns<input
+            id="required-cols"
+            placeholder="customer_id, name, email"
+          /><small
+            >These columns must exist and contain a value in every row.</small
+          ></label
+        >
+        <div class="two-cols">
+          <label
+            >Email columns<input id="email-cols" placeholder="email" /></label
+          ><label
+            >Numeric columns<input id="numeric-cols" placeholder="amount"
+          /></label>
+        </div>
+        <div class="checks">
+          <label
+            ><input type="checkbox" id="trim" checked /> Trim surrounding
+            whitespace</label
+          ><label
+            ><input type="checkbox" id="dedupe" checked /> Remove identical
+            valid rows</label
+          >
+        </div>
+        <p class="small muted">
+          Blank email and numeric values are allowed unless the column is also
+          required. Invalid rows go to a separate error report.
+        </p>
+        <p id="upload-error" class="error" role="alert"></p>
+        <div class="dialog-actions">
+          <a href="/api/sample" download>Download sample CSV ↓</a
+          ><button class="primary" id="upload-submit">Start pipeline ↗</button>
+        </div>
+      </form>
+    </dialog>
+    <dialog id="detail-dialog">
+      <div class="dialog-head">
+        <div>
+          <span class="eyebrow muted">PIPELINE DETAILS</span>
+          <h2 id="detail-name">Pipeline</h2>
+        </div>
+        <button
+          class="icon-button"
+          id="close-detail"
+          aria-label="Close job details"
+        >
+          ×
+        </button>
+      </div>
+      <div id="detail-content"></div>
+    </dialog>
+    <div id="toast" role="status" hidden></div>
+  </body>
+</html>
